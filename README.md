@@ -1,5 +1,8 @@
 ## Example of implementation chat application using socket.io
 
+<img width="882" height="430" alt="image" src="https://github.com/user-attachments/assets/e8f8e9f4-f8d4-4d11-aaeb-6f70582d5f1d" />
+
+
 ### Step 1: Preparation
 
 Makesure Node.js already installed (minimum version 18 or newest LTS preffered).
