@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Bot - Samuel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 720px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .chat-header {
+      background: #007bff;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .messages {
+      height: 520px;
+      overflow-y: auto;
+      padding: 15px;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 12px 16px;
+      border-radius: 18px;
+      max-width: 75%;
+      line-height: 1.5;
+    }
+    .user { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bot { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .typing {
+      align-self: flex-start;
+      background: #e9ecef;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      color: #666;
+      font-style: italic;
+    }
+    .input-area {
+      padding: 15px;
+      background: white;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+    }
+    input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover { background: #0056b3; }
+    .reset-btn {
+      background: #dc3545;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+    .reset-btn:hover { background: #c82333; }
+    .timestamp { font-size: 0.75em; opacity: 0.75; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <span>Chat Bot</span>
+      <button id="resetBtn" class="reset-btn" onclick="resetChat()" style="display: none;">
+        Reset Chat
+      </button>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="Ketik pesan di sini..." autocomplete="off">
+      <button onclick="sendMessage()">Kirim</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+
+  <script>
+    // ================== LOCAL STORAGE ==================
+    const STORAGE_KEY_ROOM = 'chat_room';
+    const STORAGE_KEY_SESSION = 'chat_session_id';
+    const STORAGE_USER_ID = 'chat_user_id';
+
+    let room = localStorage.getItem(STORAGE_KEY_ROOM) || `chat-${Date.now()}-${crypto.randomUUID()}`;
+    let sessionId = localStorage.getItem(STORAGE_KEY_SESSION) || "";
+
+    const socket = io('http://localhost:4000');
+    const username = "Samuel";
+    const userId = "15918";
+
+    // Simpan ke localStorage
+    function saveToLocalStorage() {
+      localStorage.setItem(STORAGE_KEY_ROOM, room);
+      localStorage.setItem(STORAGE_KEY_SESSION, sessionId);
+      localStorage.setItem(STORAGE_USER_ID, userId);
+      updateResetButton();        // Update tampilan tombol reset
+    }
+
+    // Update visibilitas tombol Reset
+    function updateResetButton() {
+      const resetBtn = document.getElementById('resetBtn');
+      resetBtn.style.display = sessionId ? 'block' : 'none';
+    }
+
+    // Join room
+    socket.emit('join', room);
+
+    // Terima pesan
+    socket.on('receiveMessage', (msg) => {
+      removeTypingIndicator();
+      if (msg.type === 'bot'){
+        addMessage(msg);
+      }
+
+      // Simpan session_id baru jika bot mengembalikannya
+      if (msg.type === 'bot' && msg.session_id) {
+        sessionId = msg.session_id;
+        saveToLocalStorage();
+      }
+    });
+
+    socket.on('error', (data) => {
+      removeTypingIndicator();
+      alert(data.message || 'Terjadi kesalahan');
+    });
+
+    function addMessage(msg) {
+      const messagesDiv = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `message ${msg.type || (msg.username === username ? 'user' : 'bot')}`;
+
+      div.innerHTML = `
+        <strong>${msg.username}</strong><br>
+        ${msg.message}
+        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString('id-ID')}</div>
+      `;
+
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Typing Indicator
+    let typingIndicator = null;
+    function showTypingIndicator() {
+      removeTypingIndicator();
+      const messagesDiv = document.getElementById('messages');
+      typingIndicator = document.createElement('div');
+      typingIndicator.className = 'typing';
+      typingIndicator.innerHTML = `<strong>Bot</strong><br><span>sedang mengetik<span class="dots">...</span></span>`;
+      messagesDiv.appendChild(typingIndicator);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      if (typingIndicator) {
+        typingIndicator.remove();
+        typingIndicator = null;
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const messageText = input.value.trim();
+      if (!messageText) return;
+
+      addMessage({
+        type: 'user',
+        username: username,
+        message: messageText,
+        timestamp: new Date().toISOString()
+      });
+
+      showTypingIndicator();
+
+      socket.emit('sendMessage', {
+        room: room,
+        username: username,
+        message: messageText,
+        user_id: userId,
+        session_id: sessionId
+      });
+
+      input.value = '';
+    }
+
+    // ================== RESET CHAT ==================
+    function resetChat() {
+      if (!confirm("Apakah Anda yakin ingin reset chat?\nSession dan riwayat akan dihapus.")) {
+        return;
+      }
+
+      // Clear localStorage
+      localStorage.removeItem(STORAGE_KEY_ROOM);
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+      localStorage.removeItem(STORAGE_USER_ID);
+
+      // Reset variabel
+      room = `chat-${Date.now()}-${crypto.randomUUID()}`;
+      sessionId = "";
+
+      // Clear layar chat
+      document.getElementById('messages').innerHTML = '';
+
+      // Join room baru
+      socket.emit('join', room);
+
+      // Tampilkan pesan sambutan
+      setTimeout(() => {
+        addMessage({
+          type: 'bot',
+          username: 'Bot',
+          message: 'Chat telah direset. Halo! Ada yang bisa saya bantu?',
+          timestamp: new Date().toISOString()
+        });
+      }, 300);
+
+      saveToLocalStorage();   // Update tombol reset (akan disembunyikan)
+    }
+
+    // Enter key
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Welcome message + update tombol reset saat halaman dimuat
+    window.onload = () => {
+      addMessage({
+        type: 'bot',
+        username: 'Bot',
+        message: 'Halo! Ada yang bisa saya bantu hari ini?',
+        timestamp: new Date().toISOString()
+      });
+
+      updateResetButton();   // Tampilkan tombol reset jika session ada
+    };
+  </script>
+
+</body>
+</html>
