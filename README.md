@@ -1,8 +1,5 @@
 ## Example of implementation chat application using socket.io
 
-<img width="882" height="430" alt="image" src="https://github.com/user-attachments/assets/e8f8e9f4-f8d4-4d11-aaeb-6f70582d5f1d" />
-
-
 ### Step 1: Preparation
 
 Makesure Node.js already installed (minimum version 18 or newest LTS preffered).
@@ -44,3 +41,8 @@ Note: *for restart automatically when codes change/update (recommended for devel
 ```
   nodemon server.js
 ```
+#### Sample Demo:
+
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/e8f8e9f4-f8d4-4d11-aaeb-6f70582d5f1d" />
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/dea5b81e-c120-4b37-91df-d3f6a5b4b233" />
+
