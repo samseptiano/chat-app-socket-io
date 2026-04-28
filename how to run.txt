@@ -1,0 +1,51 @@
+Langkah 1: Persiapan Awal
+
+Pastikan Node.js sudah terinstall (minimal versi 18 atau LTS terbaru direkomendasikan).
+
+Cek dengan perintah:
+
+  node -v
+
+  npm -v
+
+Buat folder proyek baru:
+
+  mkdir chat-websocket
+
+  cd chat-websocket
+
+Inisialisasi proyek Node.js:
+
+  npm init -y
+
+Langkah 2: Install Dependencies
+
+Jalankan perintah ini di dalam folder proyek:
+
+  npm install express socket.io axios cors
+
+Langkah 3: Buat File-file
+
+
+Langkah 4: Jalankan Server
+
+  node server.js
+
+Atau agar otomatis restart saat ada perubahan (recommended untuk development):
+
+  npm install -g nodemon
+  nodemon server.js
+
+
+
+
+Flow:
+  Frontend (Browser)
+         ↓ (WebSocket)
+  WebSocket Server (server.js)
+         ↓ (HTTP Request)
+  REST API (Backend utama kamu)
+         ↓ (Simpan ke Database)
+  Database
+         ↓ (Response sukses)
+  WebSocket Server → Broadcast ke semua user
